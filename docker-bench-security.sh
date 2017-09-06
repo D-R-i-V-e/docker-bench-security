@@ -34,25 +34,46 @@ usage () {
   cat <<EOF
   usage: ${myname} [options]
 
-  -h           optional  Print this help message
-  -l PATH      optional  Log output in PATH
+  -h             optional  Print this help message
+  -l PATH        optional  Log output in PATH
+  -i Images      optional  Images to test
+  -c Containers  optional  Containers to test
+  -t Tests       optional  Tests numbers to run -- e.g.: 45
 EOF
 }
 
 # Get the flags
 # If you add an option here, please
 # remember to update usage() above.
-while getopts hl: args
+while getopts hl:i:c:t: args
 do
   case $args in
   h) usage; exit 0 ;;
   l) logger="$OPTARG" ;;
+  i) images="$OPTARG" ;;
+  c) containers="$OPTARG" ;;
+  t) tests="$OPTARG" ;;
   *) usage; exit 1 ;;
   esac
 done
 
 if [ -z "$logger" ]; then
   logger="${myname}.log"
+fi
+
+if [ -z "$images" ]; then
+  images=$(docker images -q)
+fi
+
+if [ -z "$containers" ]; then
+  # List all running containers
+  containers=$(docker ps | sed '1d' | awk '{print $NF}')
+fi
+
+if [ -z "$tests" ]; then
+  tests=*
+else
+  tests="[$tests]*"
 fi
 
 yell "# ------------------------------------------------------------------------------
@@ -75,8 +96,8 @@ logit "Initializing $(date)\n"
 
 # Load all the tests from tests/ and run them
 main () {
-  # List all running containers
-  containers=$(docker ps | sed '1d' | awk '{print $NF}')
+  ## List all running containers
+  #containers=$(docker ps | sed '1d' | awk '{print $NF}')
   # If there is a container with label docker_bench_security, memorize it:
   benchcont="nil"
   for c in $containers; do
@@ -88,7 +109,7 @@ main () {
   # List all running containers except docker-bench (use names to improve readability in logs)
   containers=$(docker ps | sed '1d' |  awk '{print $NF}' | grep -v "$benchcont")
 
-  for test in tests/*.sh
+  for test in tests/$tests.sh
   do
      . ./"$test"
   done

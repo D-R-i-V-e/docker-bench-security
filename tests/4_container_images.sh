@@ -38,7 +38,7 @@ fi
 # Make the loop separator go back to space
 set +f; unset IFS
 
-images=$(docker images -q)
+#images=$(docker images -q)
 
 # 4.2
 check_4_2="4.2  - Ensure that containers use trusted base images"
